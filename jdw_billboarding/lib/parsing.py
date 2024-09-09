@@ -1,9 +1,10 @@
 from shuttle_notation.parsing.element import ResolvedElement
 from shuttle_notation.parsing.full_parse import Parser
 from shuttle_notation.parsing.information_parsing import DynamicArg
-from line_classify import *
-from parse_classes import *
-from shuttle_hacks import parse_args
+
+from jdw_billboarding.lib.line_classify import *
+from jdw_billboarding.lib.parse_classes import *
+from jdw_billboarding.lib.shuttle_hacks import parse_args
 
 def cut_first(source: str, amount: int) -> str:
     possible = len(source) >= amount

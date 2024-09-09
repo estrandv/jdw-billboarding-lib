@@ -1,4 +1,5 @@
-from parse_classes import EffectDefinition, SynthHeader
+from jdw_billboarding.lib.parse_classes import EffectDefinition, SynthHeader
+
 from shuttle_notation import ResolvedElement
 from pythonosc.osc_message import OscMessage
 from enum import Enum

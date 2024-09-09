@@ -2,10 +2,10 @@
 from decimal import Decimal
 from pythonosc.osc_bundle import OscBundle
 from shuttle_notation.parsing.element import ResolvedElement
-from jdw_osc_utils import ElementMessage, create_msg, to_timed_osc
+from jdw_billboarding.lib.jdw_osc_utils import ElementMessage, create_msg, to_timed_osc
 from dataclasses import dataclass, field
 
-from billboard_classes import BillboardTrack
+from jdw_billboarding.lib.billboard_classes import BillboardTrack
 
 def element_beats(element: ElementMessage) -> Decimal:
     return Decimal(element.get_time())

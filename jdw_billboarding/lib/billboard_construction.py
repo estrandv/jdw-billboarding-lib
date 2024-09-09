@@ -1,11 +1,13 @@
-from billboard_classes import *
-from jdw_osc_utils import args_as_osc
-from shuttle_hacks import parse_orphaned_args
+from jdw_billboarding.lib.billboard_classes import *
+from jdw_billboarding.lib.jdw_osc_utils import args_as_osc
+from jdw_billboarding.lib.shuttle_hacks import parse_orphaned_args
+
 from shuttle_notation.parsing.full_parse import Parser
-from jdw_osc_utils import ElementMessage, args_as_osc, resolve_special_message, to_note_mod, to_note_on_timed, to_play_sample
-from parse_classes import SynthSection
-from line_classify import QUEUE_COMMAND_SYMBOL, UPDATE_COMMAND_SYMBOL
-from parsing import parse_track
+
+from jdw_billboarding.lib.jdw_osc_utils import ElementMessage, args_as_osc, resolve_special_message, to_note_mod, to_note_on_timed, to_play_sample
+from jdw_billboarding.lib.parse_classes import SynthSection
+from jdw_billboarding.lib.line_classify import QUEUE_COMMAND_SYMBOL, UPDATE_COMMAND_SYMBOL
+from jdw_billboarding.lib.parsing import parse_track
 
 def parse_pads_config(source_string: str) -> list[PadConfig]:
     elements = Parser().parse(source_string)
@@ -94,9 +96,9 @@ def process_synth_section(synth_section: SynthSection, billboard_default_args: s
 
 
 # TODO: Perhaps a bit out of scope
-from line_classify import classify_lines
-from parsing import parse_synth_chunk
-from filtering import extract_commands, extract_default_args, extract_group_filters, extract_synth_chunks
+from jdw_billboarding.lib.line_classify import classify_lines
+from jdw_billboarding.lib.parsing import parse_synth_chunk
+from jdw_billboarding.lib.filtering import extract_commands, extract_default_args, extract_group_filters, extract_synth_chunks
 
 
 def parse_billboard(billboard_string: str) -> Billboard:

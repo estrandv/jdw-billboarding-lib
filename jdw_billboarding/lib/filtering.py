@@ -1,4 +1,4 @@
-from line_classify import BillboardLine, BillboardLineType, is_commented
+from jdw_billboarding.lib.line_classify import BillboardLine, BillboardLineType, is_commented
 
 def extract_commands(lines: list[BillboardLine]) -> list[str]:
     return [line.content for line in lines if not is_commented(line.content) and line.type == BillboardLineType.COMMAND]

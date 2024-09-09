@@ -3,17 +3,20 @@ from decimal import Decimal
 from pythonosc.osc_message import OscMessage
 from pythonosc.osc_packet import OscPacket
 from shuttle_notation.parsing.information_parsing import DynamicArg
-import note_utils as note_utils
+import jdw_billboarding.lib.note_utils as note_utils
 from enum import Enum
 from pretty_midi import note_number_to_hz
 
-from line_classify import begins_with
+from jdw_billboarding.lib.line_classify import begins_with
+
 from pythonosc import osc_message_builder, udp_client, osc_bundle_builder
 from pythonosc.osc_bundle import OscBundle
 from pythonosc.osc_message import OscMessage
 from pythonosc.osc_packet import OscPacket
+
 from shuttle_notation import ResolvedElement
-from billboard_classes import ElementMessage
+
+from jdw_billboarding.lib.billboard_classes import ElementMessage
 
 # TODO: Pass in, somehow...
 SC_DELAY_MS = 70
