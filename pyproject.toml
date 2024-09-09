@@ -1,0 +1,19 @@
+[project]
+name = "jdw_billboarding"
+version = "0.1"
+description = "Library for parsing "billboard"-format song definitions into Jackdaw commands."
+readme = "README.md"
+authors = [{ name = "Emil Strandvik" }]
+license = { text = "Apache-2.0" }
+requires-python = ">=3.10"
+classifiers = ["License :: OSI Approved :: Apache Software License"]
+dependencies = []
+
+# Allows tests to import from lower dirs without prefixing the main module
+[tool.pytest.ini_options]
+pythonpath = [
+  "jdw_billboarding"
+]
+
+[project.urls]
+Homepage = "https://github.com/estrandv/jdw-billboarding-lib"
