@@ -1,7 +1,7 @@
 [project]
 name = "jdw_billboarding"
 version = "0.1"
-description = "Library for parsing "billboard"-format song definitions into Jackdaw commands."
+description = "Library for parsing 'billboard'-format song definitions into Jackdaw commands."
 readme = "README.md"
 authors = [{ name = "Emil Strandvik" }]
 license = { text = "Apache-2.0" }
@@ -12,7 +12,7 @@ dependencies = []
 # Allows tests to import from lower dirs without prefixing the main module
 [tool.pytest.ini_options]
 pythonpath = [
-  "jdw_billboarding"
+  "lib/jdw_billboarding"
 ]
 
 [project.urls]
