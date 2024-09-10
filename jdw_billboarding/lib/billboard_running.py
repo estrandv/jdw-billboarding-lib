@@ -8,9 +8,10 @@ from jdw_billboarding.lib.billboard_osc_conversion import NrtBundleInfo, get_all
 from jdw_billboarding.lib.billboard_construction import parse_billboard
 
 from jdw_billboarding.lib.billboard_classes import Billboard, CommandContext
+from jdw_billboarding.lib.external_data_classes import SampleMessage, SynthDefMessage
 from jdw_billboarding.lib.jdw_osc_utils import create_nrt_preload_bundle
 
-from jdw_osc_utils import create_msg
+from jdw_billboarding.lib.jdw_osc_utils import create_msg
 
 # TODO: No hard link for the common prefix yet
 def get_effects_clear() -> OscMessage:
@@ -37,9 +38,10 @@ class NrtData:
     preload_messages: list[OscMessage]
     preload_bundle_batches: list[OscBundle]
 
-def get_nrt_data(bbd_content: str) -> list[NrtData]:
+# TODO: synthdefs and samples are vagrant, but it's hard to package neatly without...
+def get_nrt_data(bbd_content: str, all_synthdefs: list[SynthDefMessage], all_samples: list[SampleMessage]) -> list[NrtData]:
     billboard: Billboard = parse_billboard(bbd_content)
-    nrt_info: list[NrtBundleInfo] = get_nrt_record_bundles(billboard)
+    nrt_info: list[NrtBundleInfo] = get_nrt_record_bundles(billboard, all_synthdefs, all_samples)
     export: list[NrtData] = []
     for info in nrt_info:
         # Just some batching hack I stole off stackoverflow

@@ -7,6 +7,7 @@ from pythonosc.osc_message import OscMessage
 from pythonosc.osc_packet import OscPacket
 from shuttle_notation.parsing.information_parsing import ElementInformation
 
+from jdw_billboarding.lib.external_data_classes import SampleMessage, SynthDefMessage
 from jdw_billboarding.lib.nrt_scoring import Score
 from jdw_billboarding.lib.billboard_classes import BillboardSynthSection, BillboardTrack, CommandContext, Billboard
 from jdw_billboarding.lib.jdw_osc_utils import ElementMessage, args_as_osc, create_batch_bundle, create_batch_queue_bundle, create_msg, create_nrt_record_bundle, create_queue_update_bundle, to_timed_osc
@@ -133,7 +134,7 @@ def _filter_used_samples(all_samples: list[SampleMessage], pack_name: str, track
 
 
 """
-def get_nrt_record_bundles(billboard: Billboard) -> list[NrtBundleInfo]:
+def get_nrt_record_bundles(billboard: Billboard, all_synthdefs: list[SynthDefMessage], all_samples: list[SampleMessage]) -> list[NrtBundleInfo]:
 
     all_bundle_infos: list[NrtBundleInfo] = []
 
@@ -169,10 +170,10 @@ def get_nrt_record_bundles(billboard: Billboard) -> list[NrtBundleInfo]:
 
         # TODO: Default synth name parsing is currently broken (names have different formats and the parse is half-finished)
         needed_effect_names: list[str] = [e.synth_name for e in section.effects] + ["sampler", "router"]
-        def synth_needed(synth_name) -> bool:
+        def synth_needed(synth_name: str) -> bool:
             #return True
             return section.header.instrument_name == synth_name or synth_name in needed_effect_names
-        synth_create_msgs: list[OscMessage] = [synth.load_msg for synth in get_default_synthdefs() if synth_needed(synth.name)]
+        synth_create_msgs: list[OscMessage] = [synth.load_msg for synth in all_synthdefs if synth_needed(synth.name)]
 
         all_preload_messages += synth_create_msgs
 
@@ -181,7 +182,6 @@ def get_nrt_record_bundles(billboard: Billboard) -> list[NrtBundleInfo]:
 
             # Prepare sample loads, if relevant
             if section.header.is_sampler:
-                all_samples = get_default_samples()
                 # TODO: Bring filtering back
                 my_samples = _filter_used_samples(all_samples, section.header.instrument_name, section.tracks[track_name].messages)
                 #my_samples = all_samples
