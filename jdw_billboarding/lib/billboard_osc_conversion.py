@@ -71,6 +71,8 @@ def get_all_command_messages(billboard: Billboard, type_filter: list[CommandCont
 
             if cmd.address == "/set_bpm":
                 ret.append(create_msg("/set_bpm", [int(cmd.args[0])]))
+            if cmd.address == "/keyboard_octave":
+                ret.append(create_msg("/keyboard_octave", [int(cmd.args[0])]))
             if cmd.address == "/keyboard_quantization":
                 ret.append(create_msg("/keyboard_quantization", [cmd.args[0]]))
             if cmd.address == "/create_router":
@@ -194,8 +196,14 @@ def get_nrt_record_bundles(billboard: Billboard, all_synthdefs: list[SynthDefMes
 
             # TODO: Assert that track is not empty or all silent
 
-            # TODO: Bpm from command messagee
-            bpm: float = 116.0 # TODO: See notes on current bpm type expectation issues
+            # NOTE: Bit of a hack; ideally we should use the already-parsed SET_BPM message from command_messages
+            bpm: float = 120.0 # TODO: See notes on current bpm type expectation issues
+            for cmd in billboard.commands:
+
+                if cmd.address == "/set_bpm":
+                    bpm = float(int(cmd.args[0]))
+                
+
             file_name: str = "/home/estrandv/jdw_output/track_" + str(track_name) + ".wav"
             end_time: Decimal = score.get_end_time() + Decimal("8.0") # A little extra, but still doesn't account properly for release/delay/reverb
 
