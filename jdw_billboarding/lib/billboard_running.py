@@ -52,6 +52,9 @@ def get_nrt_data(bbd_content: str, all_synthdefs: list[SynthDefMessage], all_sam
     return export
 
 def get_queue_update_packets(bbd_content: str) -> list[OscBundle | OscMessage]:
+
+    # TODO TRANSPOSE: This returns all commands, allowing you to peek inside and note the transpose
+    # It also contains all track note elements, so any transposition needs to happen inside of it
     billboard: Billboard = parse_billboard(bbd_content)
 
     all_messages: list[OscMessage | OscBundle] = []

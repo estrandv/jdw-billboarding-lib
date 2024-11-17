@@ -113,7 +113,9 @@ def resolve_external_id(element: ResolvedElement) -> str:
     resolved = element.suffix
     return resolved if resolved != "" else "id_" + str(element.index)
 
-def resolve_freq(element: ResolvedElement) -> float:
+# TODO TRANSPOSE: Effectively where freq is determined from note number
+# Issue is that this gets called in a nested fashion, causing vagrant args if we fix-as-is
+def resolve_freq(element: ResolvedElement, transpose_steps: int = 0) -> float:
 
     if "freq" in element.args:
         return float(element.args["freq"])
@@ -128,7 +130,7 @@ def resolve_freq(element: ResolvedElement) -> float:
         octave = 0
 
         extra = (12 * (octave + 1)) if octave > 0 else 0
-        new_index = element.index + extra
+        new_index = element.index + extra + transpose_steps
         # TODO: port transpose from scales.py
         #   Implied scale: Chromatic
         #scale = scales.MAJOR
@@ -137,14 +139,12 @@ def resolve_freq(element: ResolvedElement) -> float:
         return freq
 
     else:
-        # E.g. "C" or "C#" or "Cb"
-        letter_and_semitone = element.prefix.lower()
         # As in the "3" of "c3"
-        octave = element.index if element.index != None else 1
+        octave = element.index
 
         # Math, same as for index freq calculation
         extra = (12 * (octave - 1)) if octave > 0 else 0
-        new_index = letter_check + extra
+        new_index = letter_check + extra + transpose_steps
 
         return note_number_to_hz(new_index)
 
@@ -163,10 +163,10 @@ def args_as_osc(raw_args: dict[str, Decimal], override: list[str | float]):
 
 
 # Some elements have symbols or other syntax that force a certain osc format
-def resolve_special_message(element: ResolvedElement, instrument_name: str) -> ElementMessage | None:
+def resolve_special_message(element: ResolvedElement, instrument_name: str, transpose_steps: int = 0) -> ElementMessage | None:
     if begins_with(element.suffix, "@"):
         # Remove symbol from suffix to create note mod external id
-        return ElementMessage(element, to_note_mod(element, cut_first(element.suffix, 1)))
+        return ElementMessage(element, to_note_mod(element, cut_first(element.suffix, 1), transpose_steps))
     elif is_symbol(element, "x"):
         # Silence
         return ElementMessage(element, create_msg("/empty_msg", []))
@@ -178,17 +178,17 @@ def resolve_special_message(element: ResolvedElement, instrument_name: str) -> E
         return ElementMessage(element, create_msg("/loop_started", []))
     elif begins_with(element.suffix, "$"):
         # Drone, note that suffix is trimmed similar to for note mod
-        return ElementMessage(element, to_note_on(element, instrument_name, cut_first(element.suffix, 1)))
+        return ElementMessage(element, to_note_on(element, instrument_name, cut_first(element.suffix, 1), transpose_steps))
 
     return None
 
-def to_note_mod(element: ResolvedElement, external_id_override: str = "") -> OscMessage:
+def to_note_mod(element: ResolvedElement, external_id_override: str = "", transpose_steps: int = 0) -> OscMessage:
     external_id = resolve_external_id(element) if external_id_override == "" else external_id_override
-    osc_args = args_as_osc(element.args, ["freq", resolve_freq(element)])
+    osc_args = args_as_osc(element.args, ["freq", resolve_freq(element, transpose_steps)])
     return create_msg("/note_modify", [external_id, SC_DELAY_MS] + osc_args)
 
-def to_note_on_timed(element: ResolvedElement, instrument_name: str) -> OscMessage:
-    freq = resolve_freq(element)
+def to_note_on_timed(element: ResolvedElement, instrument_name: str, transpose_steps: int = 0) -> OscMessage:
+    freq = resolve_freq(element, transpose_steps)
     external_id = resolve_external_id(element)
 
     sus: float = element.args["sus"] if "sus" in element.args else 0.0
@@ -205,8 +205,8 @@ def to_play_sample(element: ResolvedElement, instrument_name: str) -> OscMessage
         resolve_external_id(element), instrument_name, element.index, element.prefix, SC_DELAY_MS
     ] + osc_args)
 
-def to_note_on(element: ResolvedElement, instrument_name: str, external_id_override: str = "") -> OscMessage:
+def to_note_on(element: ResolvedElement, instrument_name: str, external_id_override: str = "", transpose_steps: int = 0) -> OscMessage:
     external_id = resolve_external_id(element) if external_id_override == "" else external_id_override
-    freq = resolve_freq(element)
+    freq = resolve_freq(element, transpose_steps)
     osc_args = args_as_osc(element.args, ["freq", freq])
     return create_msg("/note_on", [instrument_name, external_id, SC_DELAY_MS] + osc_args)

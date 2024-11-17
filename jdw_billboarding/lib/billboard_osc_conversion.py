@@ -202,7 +202,7 @@ def get_nrt_record_bundles(billboard: Billboard, all_synthdefs: list[SynthDefMes
 
                 if cmd.address == "/set_bpm":
                     bpm = float(int(cmd.args[0]))
-                
+
 
             file_name: str = "/home/estrandv/jdw_output/track_" + str(track_name) + ".wav"
             end_time: Decimal = score.get_end_time() + Decimal("8.0") # A little extra, but still doesn't account properly for release/delay/reverb

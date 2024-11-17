@@ -40,7 +40,7 @@ def parse_drone_header(header: SynthHeader) -> EffectDefinition:
     return EffectDefinition(header.instrument_name, "", header.default_args_string)
 
 
-def process_synth_section(synth_section: SynthSection, billboard_default_args: str) -> BillboardSynthSection:
+def process_synth_section(synth_section: SynthSection, billboard_default_args: str, transpose_steps: int = 0) -> BillboardSynthSection:
 
     # Build a combined default arg string from both DEFAULT and synth header args, prioritizing synth header args
     full_default_args = billboard_default_args
@@ -69,18 +69,17 @@ def process_synth_section(synth_section: SynthSection, billboard_default_args: s
         def create_default_message(element: ResolvedElement) -> ElementMessage:
             # Drone tracks use note mod by default
             if synth_section.header.is_drone:
-                return ElementMessage(element, to_note_mod(element, hdrone_id))
+                return ElementMessage(element, to_note_mod(element, hdrone_id, transpose_steps))
             elif synth_section.header.is_sampler:
                 return ElementMessage(element, to_play_sample(element, synth_section.header.instrument_name))
             else:
-                return ElementMessage(element, to_note_on_timed(element, synth_section.header.instrument_name))
+                return ElementMessage(element, to_note_on_timed(element, synth_section.header.instrument_name, transpose_steps))
 
         elements = parse_track(track, full_default_args)
         resolved: list[ElementMessage] = []
         for element in elements:
-            special = resolve_special_message(element, synth_section.header.instrument_name)
+            special = resolve_special_message(element, synth_section.header.instrument_name, transpose_steps)
             resolved.append(special if special != None else create_default_message(element))
-
 
         group_name = track.group_override if track.group_override != "" else synth_section.header.group_name
         track_name = "_".join([synth_section.header.instrument_name, group_name, str(track.index)])
@@ -108,11 +107,17 @@ def parse_billboard(billboard_string: str) -> Billboard:
     command_lines = extract_commands(lines)
     commands = [parse_command(line) for line in command_lines]
 
+    transpose_steps:int = 0
+    for command in commands:
+        if command.address == "/transpose":
+            transpose_steps = int(command.args[0])
+
     synth_chunks = extract_synth_chunks(lines)
 
     synth_sections = [parse_synth_chunk(chunk) for chunk in synth_chunks]
 
-    sections: list[BillboardSynthSection] = [process_synth_section(s, billboard_default_args) for s in synth_sections]
+    # TODO TRANSPOSE: This is where jdw data becomes messages (ElementMessage)
+    sections: list[BillboardSynthSection] = [process_synth_section(s, billboard_default_args, transpose_steps) for s in synth_sections]
 
     return Billboard(sections, filters, commands)
 
