@@ -21,6 +21,7 @@ from decimal import Decimal
 
 """
 
+    TODO
     NEXT CHALLENGE: REFACTORING
 
     This note mapping is only used to resolve frequencies, assuming notes to already be given.
@@ -32,7 +33,21 @@ from decimal import Decimal
     Starting point:
         - We need to harmonize letter-to-midid with chord resolution, so that we always get a list of notes
             even for the singulars, and tinker with the distinction between is_chord() in here and nowhere else.
+        - For this we need smart chord name resolution, first of all, which requires that we settle on a
+            chord naming standard.
+            - Given that we tend to use numbers to break up the jdw notation standard, "CMAJ7" is not a good
+                naming convention since the "7" gets confused with octave.
 
+                CMAJVII
+                CMAJS
+                DBMIN
+                C-MAJ-SEVEN
+
+            - Note also how we cannot establish chords that collide with the note letter. Not sure if anything does, but
+                say for example if there was a "CM" tone, then "CMAJ" would be hard to distinguish properly.
+
+            - TODO: Sounds a bit weird with "DBMIN", wondering if that's just "DMIN" with the "DB" implied. Might have to do
+                more research. But we can start with the major chord and scale since those should work out of the box.
 
 """
 

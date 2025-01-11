@@ -6,6 +6,7 @@ from shuttle_notation.parsing.information_parsing import DynamicArg
 import jdw_billboarding.lib.note_utils as note_utils
 from enum import Enum
 from pretty_midi import note_number_to_hz
+from jdw_billboarding.lib.parsing import cut_first
 
 from jdw_billboarding.lib.line_classify import begins_with
 
@@ -175,7 +176,7 @@ def resolve_special_message(element: ResolvedElement, instrument_name: str, tran
         pass
     elif is_symbol(element, "§"):
         # Loop start marker
-        return ElementMessage(element, create_msg("/loop_started", []))
+        return ElementMessage(element, create_msg("/jdw_sc_event_trigger", ["loop_started", SC_DELAY_MS]))
     elif begins_with(element.suffix, "$"):
         # Drone, note that suffix is trimmed similar to for note mod
         return ElementMessage(element, to_note_on(element, instrument_name, cut_first(element.suffix, 1), transpose_steps))
