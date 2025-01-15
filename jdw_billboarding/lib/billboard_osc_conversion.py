@@ -179,7 +179,7 @@ def get_nrt_record_bundles(billboard: Billboard, all_synthdefs: list[SynthDefMes
 
         # TODO: Trying to understand why samplers sound strange in NRT
         timed_eff_msgs: list[OscBundle] = [to_timed_osc("0.0", msg) for msg in get_section_effects_create(section)]
-        #timed_eff_msgs: list[OscBundle] = [to_timed_osc("0.0", msg) for msg in get_all_effects_create(billboard)]
+        timed_eff_msgs += [to_timed_osc("0.0", msg) for msg in get_all_drones_create(billboard)]
 
         # Preload messages are messages not part of the bundle but needed before the bundle is sent
         all_preload_messages: list[OscMessage] = [create_msg("/clear_nrt", [])]
@@ -187,6 +187,7 @@ def get_nrt_record_bundles(billboard: Billboard, all_synthdefs: list[SynthDefMes
 
         # TODO: Default synth name parsing is currently broken (names have different formats and the parse is half-finished)
         needed_effect_names: list[str] = [e.synth_name for e in section.effects] + ["sampler", "router"]
+        needed_effect_names += [e.synth_name for e in section.drones]
         def synth_needed(synth_name: str) -> bool:
             #return True
             return section.header.instrument_name == synth_name or synth_name in needed_effect_names
