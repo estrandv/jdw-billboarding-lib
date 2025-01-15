@@ -57,6 +57,7 @@ class BillboardSynthSection:
     # By name
     tracks: dict[str, BillboardTrack]
     effects: list[EffectMessage]
+    drones: list[EffectMessage]
     key_configuration: BillboardKeyConfiguration | None
     header: SynthHeader
 

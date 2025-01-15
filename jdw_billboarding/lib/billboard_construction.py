@@ -50,6 +50,7 @@ def process_synth_section(synth_section: SynthSection, billboard_default_args: s
 
     tracks: dict[str, BillboardTrack] = {}
     effects: list[EffectMessage] = []
+    drones: list[EffectMessage] = []
 
     for effect in synth_section.effects:
         effects.append(parse_effect(effect, synth_section.header.group_name, full_default_args))
@@ -63,7 +64,13 @@ def process_synth_section(synth_section: SynthSection, billboard_default_args: s
             # Add an effect create/mod for the drone that the track will interact with
             header_drone_def = parse_drone_header(synth_section.header)
             hdrone_id = "effect_" + synth_section.header.group_name + "_" + str(track.index)
-            effects.append(parse_effect(header_drone_def, synth_section.header.group_name, full_default_args, hdrone_id))
+
+            # Add hard override to amp arg for drone, ensuring that drones are not created with AMP
+            # (Drones should set amp when running for optimal tracking)
+            # TODO: Kinda messy way to do this
+            header_drone_def.args_string = header_drone_def.args_string + ",amp0" if header_drone_def.args_string != "" else ""
+
+            drones.append(parse_effect(header_drone_def, synth_section.header.group_name, full_default_args, hdrone_id))
 
         # Define behaviour for elements that don't conform to any special message standard
         def create_default_message(element: ResolvedElement) -> ElementMessage:
@@ -91,7 +98,7 @@ def process_synth_section(synth_section: SynthSection, billboard_default_args: s
     key_configuration = BillboardKeyConfiguration(synth_section.header.instrument_name, pads, key_args, synth_section.header.is_sampler)
     keys = key_configuration if synth_section.header.is_selected else None
 
-    return BillboardSynthSection(tracks, effects, keys, synth_section.header)
+    return BillboardSynthSection(tracks, effects, drones, keys, synth_section.header)
 
 
 # TODO: Perhaps a bit out of scope

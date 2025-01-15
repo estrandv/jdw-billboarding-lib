@@ -54,11 +54,26 @@ def get_all_effects_mod(billboard: Billboard) -> list[OscMessage]:
         ret += [create_msg("/note_modify", [e.external_id, 0] + e.osc_args) for e in section.effects]
     return ret
 
+def get_all_drones_silence(billboard: Billboard) -> list[OscMessage]:
+    ret: list[OscMessage] = []
+    for section in billboard.sections:
+        ret += [create_msg("/note_modify", [e.external_id, 0, "amp", 0.0]) for e in section.drones]
+    return ret
+
 def get_all_effects_create(billboard: Billboard) -> list[OscMessage]:
     ret: list[OscMessage] = []
     for section in billboard.sections:
         ret += get_section_effects_create(section)
     return ret
+
+def get_all_drones_create(billboard: Billboard) -> list[OscMessage]:
+    ret: list[OscMessage] = []
+    for section in billboard.sections:
+        ret += get_section_drones_create(section)
+    return ret
+
+def get_section_drones_create(section: BillboardSynthSection) -> list[OscMessage]:
+    return [create_msg("/note_on", [e.synth_name, e.external_id, 0] + e.osc_args) for e in section.drones]
 
 def get_section_effects_create(section: BillboardSynthSection) -> list[OscMessage]:
     return [create_msg("/note_on", [e.synth_name, e.external_id, 0] + e.osc_args) for e in section.effects]

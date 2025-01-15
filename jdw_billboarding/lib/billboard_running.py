@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pythonosc.osc_bundle import OscBundle
 from pythonosc.osc_message import OscMessage
 
-from jdw_billboarding.lib.billboard_osc_conversion import NrtBundleInfo, get_all_command_messages, get_all_effects_create, get_all_effects_mod, get_nrt_record_bundles, get_sampler_keyboard_config, get_sequencer_batch_queue_bundle, get_synth_keyboard_config
+from jdw_billboarding.lib.billboard_osc_conversion import NrtBundleInfo, get_all_command_messages, get_all_drones_silence, get_all_effects_create, get_all_effects_mod, get_nrt_record_bundles, get_sampler_keyboard_config, get_sequencer_batch_queue_bundle, get_synth_keyboard_config, get_all_drones_create
 from jdw_billboarding.lib.billboard_construction import parse_billboard
 
 from jdw_billboarding.lib.billboard_classes import Billboard, CommandContext
@@ -29,8 +29,14 @@ def get_configuration_messages(bbd_content: str) -> list[OscMessage]:
     all_messages += [get_effects_clear()]
     all_messages += get_all_command_messages(billboard, [CommandContext.ALL, CommandContext.UPDATE])
     all_messages += get_all_effects_create(billboard)
+    all_messages += get_all_drones_create(billboard)
 
     return all_messages
+
+def get_silence_drones(bbd_content: str) -> list[OscMessage]:
+    billboard: Billboard = parse_billboard(bbd_content)
+
+    return get_all_drones_silence(billboard)
 
 @dataclass
 class NrtData:
