@@ -125,17 +125,13 @@ def resolve_freq(element: ResolvedElement, transpose_steps: int = 0) -> float:
 
     if letter_check == -1:
 
-        # Placeholders
-        # TODO: Complete bullshit, but helps with keybaoard usage for now
-        #octave = 0 if element.index > 12 else 3
-        octave = 0
+        index = note_utils.resolve_index(element.index, "c", "maj")
 
+        # TODO: Actual passed in octave
+        octave = 4
         extra = (12 * (octave + 1)) if octave > 0 else 0
-        new_index = element.index + extra + transpose_steps
-        # TODO: port transpose from scales.py
-        #   Implied scale: Chromatic
-        #scale = scales.MAJOR
-        #new_index = transpose(new_index, scale)
+        new_index = index + extra + transpose_steps
+
         freq = note_number_to_hz(new_index)
         return freq
 

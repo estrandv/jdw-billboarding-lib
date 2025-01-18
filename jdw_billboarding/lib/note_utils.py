@@ -3,53 +3,72 @@ from decimal import Decimal
 
 """
 
-    Chords are most easily done dynamically; each "maj7" chord is the same distances but in a different scale.
+    A scale is a set of midi-notes that the scale includes.
 
-    A chord is a progression of distances and not a set of notes.
+    Let's say we have scale MEEP: [0 2 3 5 11]
 
-    So you would take a chromatic set of notes, a starting note, and the steps needed by index.
+    We play note 0, which is MEEP[0] = 0
 
-    CMAJ is notes 0, 2, 4 (c, e, g).
-        - Resolve the starting note. Ignore the value of the index (no distance), but use it as your starting point.
-        - We now have index 0 in the array, from "c": 0.
-        - MAJ chords use notes 0, 2 and 4 in their scale, so we determine the distances for these notes:
-                - index2=dist2, index4=dist2(4)
-                - 0+2 = 2, 2+2 = 4
-                => 0, 2, 4
+    But then comes overshoot: what is note 23?
+    - Operate on len(MEEP) - 1 = 4 (max index)
+    - 23 % 4 = 3 (this is our actual index)
+    - 23 / 4 = 5.75, but rounded downward with int(n) we get 5 (octave boost)
+    - There are 11 indices in a full scale
+        - c1=0, b1=11, c2=12
+        - C#1=1, C#2 = 13
+        - So to add a full octave to any given note, we do +12
 
-"""
+    - Needed extra arguments:
+        - Scale name: e.g. "cmaj", or if using math: "c" and "maj"
+        - Starting octave: an additional octave boost, so as to remove the need for arbitrary high numbers
 
-"""
+    SCALE MATH
+    - Each scale is just a set of distances on a chromatic scale
+    - So CMAJ is C(0), D(+2), E(+2), F(+1), G(+2), A(+2), B(+2)
+    - Given "e maj":
+        - 0 = e
+        - 2 = f#
+        - 4 = g#
+        - 5 = a
+        - 7 = b
+        - 9 = (looparound) c#2
+        - 11 = d#2
+    - ... but the looparound doesn't really apply, since D#1 is also part of the sale
+    - Steps:
+        - Determine letter chromatic index: e=4
+        - Gather array by adding distances to root note, implicitly including root note as index 0: [4, 6, 8, 9, 11, 13, 15]
+        - Resolve on chromatic scale using modulus of 11 (lenth of chroma scale): [4, 6, 8, 9, 11, 1, 3]
+        - Sort the resulting array: [1,3,4,6,8,9,11]
+        => Now you have your scale
 
-    TODO
-    NEXT CHALLENGE: REFACTORING
-
-    This note mapping is only used to resolve frequencies, assuming notes to already be given.
-        - A mod message will never make any use of additional notes, but can handle the redundancy by grabbing the first index.
-        - We're mainly concerned with returning additional notes for NOTE_ON and NOTE_ON_TIMED, so those will need to return lists instead
-            of singular messages and do some additional logic for the timing of the chord notes
-        - Resolving frequency can comfortably return an array, which we then know how to handle in callers.
-
-    Starting point:
-        - We need to harmonize letter-to-midid with chord resolution, so that we always get a list of notes
-            even for the singulars, and tinker with the distinction between is_chord() in here and nowhere else.
-        - For this we need smart chord name resolution, first of all, which requires that we settle on a
-            chord naming standard.
-            - Given that we tend to use numbers to break up the jdw notation standard, "CMAJ7" is not a good
-                naming convention since the "7" gets confused with octave.
-
-                CMAJVII
-                CMAJS
-                DBMIN
-                C-MAJ-SEVEN
-
-            - Note also how we cannot establish chords that collide with the note letter. Not sure if anything does, but
-                say for example if there was a "CM" tone, then "CMAJ" would be hard to distinguish properly.
-
-            - TODO: Sounds a bit weird with "DBMIN", wondering if that's just "DMIN" with the "DB" implied. Might have to do
-                more research. But we can start with the major chord and scale since those should work out of the box.
+    META STEPS
+    1. Construct the scale array
+    2. Resolve notes on the scale
 
 """
+
+def _generate_scale(root_note: int, scale_type_key: str) -> list[int]:
+    scale_distances = SCALE_MATH[scale_type_key] if scale_type_key in SCALE_MATH else SCALE_MATH["maj"]
+
+    raw_scale_indices: list[int] = [root_note]
+    index_step = root_note
+    for dis in scale_distances:
+        index_step += dis
+        raw_scale_indices.append(index_step)
+
+    chromatic_indices = [i % 11 for i in raw_scale_indices] # 11 = length -1 of chroma scale
+    # Duplicates are possible
+    return sorted(list(set(chromatic_indices)))
+
+# Note_id: typically the index of your note; "I want to play note 22 in c maj7"
+def resolve_index(note_id: int, scale_root_letter: str, scale_type_key: str) -> int:
+    root_note = MIDI_MAP[scale_root_letter] if scale_root_letter in MIDI_MAP else 0
+    my_scale = _generate_scale(root_note, scale_type_key)
+    scale_indices = len(my_scale) - 1
+    raw_scaled_index = my_scale[note_id % scale_indices]
+    added_octaves = int(note_id / scale_indices)
+    added_value = (12 * added_octaves)
+    return raw_scaled_index + added_value
 
 # https://stackoverflow.com/questions/13926280/musical-note-string-c-4-f-3-etc-to-midi-note-value-in-python
 # [["C"],["C#","Db"],["D"],["D#","Eb"],["E"],["F"],["F#","Gb"],["G"],["G#","Ab"],["A"],["A#","Bb"],["B"]]
@@ -73,45 +92,13 @@ MIDI_MAP: dict[str, int] = {
     "b": 11
 }
 
-# Steps per progression per scale (looping)
-MAJOR_SCALE: list[int] = [1, 2, 2, 1, 2, 2, 2]
-# The "0" in chords is not really important - so we just list the other parts
-MAJ_CHORD: list[int] = [2, 4]
+SCALE_MATH: dict[str, list[int]] = {
+    "maj": [2, 2, 1, 2, 2, 2] # 0=c is implicit
+}
 
-def get_chord(base_note: str, scale: list[int], chord_progression: list[int]) -> list[int]:
-
-    base_midi = note_letter_to_midi(base_note)
-
-    if base_midi == -1:
-        return []
-
-    notes: list[int] = [base_midi]
-    final_index = len(scale) - 1
-    for dist_index in chord_progression:
-
-
-        octave: int = 0 # Oct is zero-indexed; "1" means "+1"
-
-        # Determine how far to look ahead in the scale using the listed distance
-        search_index = notes[-1] + dist_index
-        divide: float = search_index / final_index
-
-        # 13 / 12 = 1.083
-        # 13 / 13 = 1
-        # 12 / 13 = 0.9
-        # 24 / 12 = 2
-
-        if divide > 1:
-            # Handle cases where the calculated distance overshoots the base scale and goes into next octave
-            index = search_index % final_index
-            octave: int = int(divide) # int() rounds down to nearest whole.
-            # TODO: Not sure if octave bumping is affected by scales; e.g. is "note 1 in next octave" always a +12 for every scale?
-            notes.append(scale[index] + (octave * 12)) # Assuming 12 notes per octave
-        else:
-            # Does fit in scale
-            notes.append(scale[search_index])
-
-    return notes
+SCALES: dict[str, list[int]] = {
+    "cmaj": [0,2,4,5,7,9,11]
+}
 
 
 def note_letter_to_midi(note_string: str) -> int:
