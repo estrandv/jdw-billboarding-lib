@@ -1,4 +1,5 @@
 from jdw_billboarding.lib.billboard_classes import *
+from jdw_billboarding.lib.element_osc_conversion import ElementConverter, InstrumentType
 from jdw_billboarding.lib.jdw_osc_utils import args_as_osc
 from jdw_billboarding.lib.shuttle_hacks import parse_orphaned_args
 
@@ -72,21 +73,20 @@ def process_synth_section(synth_section: SynthSection, billboard_default_args: s
 
             drones.append(parse_effect(header_drone_def, synth_section.header.group_name, full_default_args, hdrone_id))
 
-        # Define behaviour for elements that don't conform to any special message standard
-        def create_default_message(element: ResolvedElement) -> ElementMessage:
-            # Drone tracks use note mod by default
-            if synth_section.header.is_drone:
-                return ElementMessage(element, to_note_mod(element, hdrone_id, transpose_steps))
-            elif synth_section.header.is_sampler:
-                return ElementMessage(element, to_play_sample(element, synth_section.header.instrument_name))
-            else:
-                return ElementMessage(element, to_note_on_timed(element, synth_section.header.instrument_name, transpose_steps))
+        instrument_type: InstrumentType = InstrumentType.SYNTH
+        if synth_section.header.is_drone:
+            instrument_type = InstrumentType.DRONE
+        elif synth_section.header.is_sampler:
+            instrument_type = InstrumentType.SAMPLER
+
+        element_converter_for_track = ElementConverter(synth_section.header.instrument_name, str(track.index), instrument_type, hdrone_id)
 
         elements = parse_track(track, full_default_args)
         resolved: list[ElementMessage] = []
         for element in elements:
-            special = resolve_special_message(element, synth_section.header.instrument_name, transpose_steps)
-            resolved.append(special if special != None else create_default_message(element))
+            msg = element_converter_for_track.resolve_message(element, transpose_steps)
+            if msg: # TODO: Not sure how to handle "is not none" here
+                resolved.append(msg)
 
         group_name = track.group_override if track.group_override != "" else synth_section.header.group_name
         track_name = "_".join([synth_section.header.instrument_name, group_name, str(track.index)])

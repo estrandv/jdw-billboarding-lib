@@ -190,6 +190,12 @@ def to_note_mod(element: ResolvedElement, external_id_override: str = "", transp
 
 def to_note_on_timed(element: ResolvedElement, instrument_name: str, transpose_steps: int = 0) -> OscMessage:
     freq = resolve_freq(element, transpose_steps)
+
+    # TODO: Need to rework this carefully to avoid identical external ids for all note_ons
+    # 1. Pack ResolvedElement into some other kind of data first, before converting to osc
+    # 2. Provide track name and make tone and note-letter both have resolvable midi-tone-indexes that can be used for id
+    # 3. Append index of note in track definition as well, so that two "g4" in the same track don't have the same id
+    # Better to use object orientation here, I feel, since there's a lot of pass-along data
     external_id = resolve_external_id(element)
 
     sus: float = element.args["sus"] if "sus" in element.args else 0.0
