@@ -93,7 +93,8 @@ MIDI_MAP: dict[str, int] = {
 }
 
 SCALE_MATH: dict[str, list[int]] = {
-    "maj": [2, 2, 1, 2, 2, 2] # 0=c is implicit
+    "maj": [2, 2, 1, 2, 2, 2], # 0=c is implicit
+    "min": [2, 1, 2, 2, 1, 2]
 }
 
 SCALES: dict[str, list[int]] = {

@@ -35,11 +35,13 @@ from dataclasses import dataclass
 from enum import Enum
 from pythonosc.osc_message import OscMessage
 from shuttle_notation.parsing.element import ResolvedElement
+from pretty_midi import note_number_to_hz
 
 from jdw_billboarding.lib.billboard_classes import ElementMessage
-from jdw_billboarding.lib.jdw_osc_utils import args_as_osc, create_msg, resolve_freq
+from jdw_billboarding.lib.jdw_osc_utils import args_as_osc, create_msg
 from jdw_billboarding.lib.line_classify import begins_with
 from jdw_billboarding.lib.parsing import cut_first
+import jdw_billboarding.lib.note_utils as note_utils
 
 def is_symbol(element: ResolvedElement, sym: str) -> bool:
     return element.suffix.lower() == sym \
@@ -52,11 +54,18 @@ class InstrumentType(Enum):
     DRONE = 2
 
 @dataclass
+class ScaleData:
+    scale_key: str # e.g. "c#"
+    scale_type: str
+    ocatave_start: int
+
+@dataclass
 class ElementConverter:
     instrument_name: str
     common_identifier: str # Track index
     instrument_type: InstrumentType
     external_id_override: str
+    scale_data: ScaleData
     id_counter: int = 0 # So as to give different ids to each sequential note in a track
 
     # TODO: Not sure if transpose steps is relevant here, should it be class level?
@@ -85,11 +94,11 @@ class ElementConverter:
 
     def to_note_mod(self, element: ResolvedElement, transpose_steps: int = 0) -> OscMessage:
         external_id = self.resolve_external_id(element) if self.external_id_override == "" else self.external_id_override
-        osc_args = args_as_osc(element.args, ["freq", resolve_freq(element, transpose_steps)])
+        osc_args = args_as_osc(element.args, ["freq", self.resolve_freq(element, transpose_steps)])
         return create_msg("/note_modify", [external_id, SC_DELAY_MS] + osc_args)
 
     def to_note_on_timed(self, element: ResolvedElement, transpose_steps: int = 0) -> OscMessage:
-        freq = resolve_freq(element, transpose_steps)
+        freq = self.resolve_freq(element, transpose_steps)
 
         external_id = self.resolve_external_id(element)
 
@@ -102,14 +111,14 @@ class ElementConverter:
         return create_msg("/note_on_timed", [self.instrument_name, external_id, gate_time, SC_DELAY_MS] + osc_args)
 
     def to_play_sample(self, element: ResolvedElement) -> OscMessage:
-        osc_args = args_as_osc(element.args, ["freq", resolve_freq(element)])
+        osc_args = args_as_osc(element.args, ["freq", self.resolve_freq(element)])
         return create_msg("/play_sample", [
             self.resolve_external_id(element), self.instrument_name, element.index, element.prefix, SC_DELAY_MS
         ] + osc_args)
 
     def to_note_on(self, element: ResolvedElement, external_id_override: str = "", transpose_steps: int = 0) -> OscMessage:
         external_id = self.resolve_external_id(element) if external_id_override == "" else external_id_override
-        freq = resolve_freq(element, transpose_steps)
+        freq = self.resolve_freq(element, transpose_steps)
         osc_args = args_as_osc(element.args, ["freq", freq])
         return create_msg("/note_on", [self.instrument_name, external_id, SC_DELAY_MS] + osc_args)
 
@@ -118,3 +127,35 @@ class ElementConverter:
         return resolved if resolved != "" else \
             self.common_identifier + "_" + self.instrument_name + "_" + str(self.id_counter) + str(element.index) + "_{nodeId}"
         self.id_counter += 1
+
+    # TODO TRANSPOSE: Effectively where freq is determined from note number
+    # Issue is that this gets called in a nested fashion, causing vagrant args if we fix-as-is
+    # TODO: Transpose steps are universal and should be provided as a self-parameter
+    def resolve_freq(self, element: ResolvedElement, transpose_steps: int = 0) -> float:
+
+        if "freq" in element.args:
+            return float(element.args["freq"])
+
+        letter_check = note_utils.note_letter_to_midi(element.prefix)
+
+        if letter_check == -1:
+
+
+            index = note_utils.resolve_index(element.index, self.scale_data.scale_key, self.scale_data.scale_type)
+
+            octave = self.scale_data.ocatave_start
+            extra = (12 * (octave + 1)) if octave > 0 else 0
+            new_index = index + extra + transpose_steps
+
+            freq = note_number_to_hz(new_index)
+            return freq
+
+        else:
+            # As in the "3" of "c3"
+            octave = element.index
+
+            # Math, same as for index freq calculation
+            extra = (12 * (octave - 1)) if octave > 0 else 0
+            new_index = letter_check + extra + transpose_steps
+
+            return note_number_to_hz(new_index)

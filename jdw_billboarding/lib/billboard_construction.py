@@ -1,5 +1,5 @@
 from jdw_billboarding.lib.billboard_classes import *
-from jdw_billboarding.lib.element_osc_conversion import ElementConverter, InstrumentType
+from jdw_billboarding.lib.element_osc_conversion import ElementConverter, InstrumentType, ScaleData
 from jdw_billboarding.lib.jdw_osc_utils import args_as_osc
 from jdw_billboarding.lib.shuttle_hacks import parse_orphaned_args
 
@@ -41,7 +41,7 @@ def parse_drone_header(header: SynthHeader) -> EffectDefinition:
     return EffectDefinition(header.instrument_name, "", header.default_args_string)
 
 
-def process_synth_section(synth_section: SynthSection, billboard_default_args: str, transpose_steps: int = 0) -> BillboardSynthSection:
+def process_synth_section(synth_section: SynthSection, billboard_default_args: str, scale_data: ScaleData, transpose_steps: int = 0) -> BillboardSynthSection:
 
     # Build a combined default arg string from both DEFAULT and synth header args, prioritizing synth header args
     full_default_args = billboard_default_args
@@ -79,7 +79,7 @@ def process_synth_section(synth_section: SynthSection, billboard_default_args: s
         elif synth_section.header.is_sampler:
             instrument_type = InstrumentType.SAMPLER
 
-        element_converter_for_track = ElementConverter(synth_section.header.instrument_name, str(track.index), instrument_type, hdrone_id)
+        element_converter_for_track = ElementConverter(synth_section.header.instrument_name, str(track.index), instrument_type, hdrone_id, scale_data)
 
         elements = parse_track(track, full_default_args)
         resolved: list[ElementMessage] = []
@@ -123,8 +123,14 @@ def parse_billboard(billboard_string: str) -> Billboard:
 
     synth_sections = [parse_synth_chunk(chunk) for chunk in synth_chunks]
 
+    # Sane default
+    scale_data = ScaleData("c", "maj", 4)
+    for command in commands:
+        if command.address == "/set_scale":
+            scale_data = ScaleData(str(command.args[0]), str(command.args[1]), int(command.args[2]))
+
     # TODO TRANSPOSE: This is where jdw data becomes messages (ElementMessage)
-    sections: list[BillboardSynthSection] = [process_synth_section(s, billboard_default_args, transpose_steps) for s in synth_sections]
+    sections: list[BillboardSynthSection] = [process_synth_section(s, billboard_default_args, scale_data, transpose_steps) for s in synth_sections]
 
     return Billboard(sections, filters, commands)
 
