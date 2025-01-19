@@ -56,8 +56,11 @@ def _generate_scale(root_note: int, scale_type_key: str) -> list[int]:
         index_step += dis
         raw_scale_indices.append(index_step)
 
-    chromatic_indices = [i % 11 for i in raw_scale_indices] # 11 = length -1 of chroma scale
+    #chromatic_indices = [i % 11 for i in raw_scale_indices] # 11 = length -1 of chroma scale
     # Duplicates are possible
+    chromatic_scale = [0,1,2,3,4,5,6,7,8,9,10,11]
+    chromatic_indices = [get_in_list(i, chromatic_scale) for i in raw_scale_indices] # 11 = length -1 of chroma scale
+
     return sorted(list(set(chromatic_indices)))
 
 # Note_id: typically the index of your note; "I want to play note 22 in c maj7"
@@ -65,10 +68,19 @@ def resolve_index(note_id: int, scale_root_letter: str, scale_type_key: str) -> 
     root_note = MIDI_MAP[scale_root_letter] if scale_root_letter in MIDI_MAP else 0
     my_scale = _generate_scale(root_note, scale_type_key)
     scale_indices = len(my_scale) - 1
-    raw_scaled_index = my_scale[note_id % scale_indices]
-    added_octaves = int(note_id / scale_indices)
+    raw_scaled_index = get_in_list(note_id, my_scale)
+    added_octaves = int(note_id / scale_indices) if note_id / scale_indices > 1 else 0
     added_value = (12 * added_octaves)
     return raw_scaled_index + added_value
+
+# Loop around list until index fits it
+def get_in_list(raw_index: int, my_list: list[int]) -> int:
+
+    indices_in_list = len(my_list) - 1
+    times = raw_index / indices_in_list
+    subtract = (indices_in_list * int(times)) + 1 if times > 1 else 0
+    re_attempt = raw_index - subtract
+    return my_list[re_attempt]
 
 # https://stackoverflow.com/questions/13926280/musical-note-string-c-4-f-3-etc-to-midi-note-value-in-python
 # [["C"],["C#","Db"],["D"],["D#","Eb"],["E"],["F"],["F#","Gb"],["G"],["G#","Ab"],["A"],["A#","Bb"],["B"]]
@@ -108,3 +120,11 @@ def note_letter_to_midi(note_string: str) -> int:
         return MIDI_MAP[note_string]
     else:
         return -1
+
+# Tests
+if __name__ == "__main__":
+
+    cmaj = _generate_scale(0, "maj")
+    assert cmaj == [0, 2, 4, 5, 7, 9, 11], cmaj
+    resolved = [resolve_index(i, "c", "maj") for i in [0, 1, 2, 3, 4, 5, 6, 7]]
+    assert resolved == [0, 2, 4, 5, 7, 9, 11, 12], resolved
