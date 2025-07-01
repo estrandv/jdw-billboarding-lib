@@ -66,6 +66,7 @@ def parse_synth_header(content: str) -> SynthHeader:
         current_default_args_string = space_split[1] if len(space_split) > 1 else ""
         # E.g. pads configuration for SP
         additional_config_string = space_split[2] if len(space_split) > 2 else ""
+        additional_config_string += " " + " ".join(space_split[3:]) if len(space_split) > 3 else ""
         current_is_sampler = False
         current_is_drone = False
 
