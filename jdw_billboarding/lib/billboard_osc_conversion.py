@@ -11,6 +11,7 @@ from jdw_billboarding.lib.external_data_classes import SampleMessage, SynthDefMe
 from jdw_billboarding.lib.nrt_scoring import Score
 from jdw_billboarding.lib.billboard_classes import BillboardSynthSection, BillboardTrack, CommandContext, Billboard
 from jdw_billboarding.lib.jdw_osc_utils import ElementMessage, args_as_osc, create_batch_bundle, create_batch_queue_bundle, create_msg, create_nrt_record_bundle, create_queue_update_bundle, to_timed_osc
+from jdw_billboarding.lib.shuttle_hacks import parse_orphaned_args
 
 def get_synth_keyboard_config(billboard: Billboard) -> list[OscMessage]:
 
@@ -91,11 +92,20 @@ def get_all_command_messages(billboard: Billboard, type_filter: list[CommandCont
             if cmd.address == "/keyboard_quantization":
                 ret.append(create_msg("/keyboard_quantization", [cmd.args[0]]))
             if cmd.address == "/create_router":
+                # TODO: Might be able to actually skip all PLOP sounds if we keep track of external ids and run n_set on newly created (ignored) existing ids
                 in_arg = float(cmd.args[0])
                 out_arg = float(cmd.args[1])
                 ext_id = "effect_router_" + str(in_arg) + "_" + str(out_arg)
                 ret.append(create_msg("/note_on", ["router", ext_id, 0, "in", in_arg, "out", out_arg]))
-
+            if cmd.address == "/create_effect":
+                effect_name = str(cmd.args[0])
+                effect_id = str(cmd.args[1])
+                effect_args = str(cmd.args[2])
+                args = parse_orphaned_args([effect_args])
+                osc_args = args_as_osc(args, [])
+                # Add a modify as well in case the id already exists
+                ret.append(create_msg("/note_on", [effect_name, effect_id, 0]))
+                ret.append(create_msg("/note_modify", [effect_id, 0] + osc_args))
     return ret
 
 @dataclass

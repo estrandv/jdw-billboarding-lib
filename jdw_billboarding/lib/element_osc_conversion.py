@@ -140,7 +140,7 @@ class ElementConverter:
 
         if letter_check == -1:
 
-
+            # TODO: Rework so that an OCT arg is used instead of scale_data for oct 
             index = note_utils.resolve_index(element.index, self.scale_data.scale_key, self.scale_data.scale_type)
 
             octave = self.scale_data.ocatave_start
