@@ -102,13 +102,14 @@ def process_synth_section(synth_section: SynthSection, billboard_default_args: s
 
 
 # TODO: Perhaps a bit out of scope
-from jdw_billboarding.lib.line_classify import classify_lines
-from jdw_billboarding.lib.parsing import parse_synth_chunk
+from jdw_billboarding.lib.tree_sitter_backend import TreeSitterBackend
 from jdw_billboarding.lib.filtering import extract_commands, extract_default_args, extract_group_filters, extract_synth_chunks
+
+_backend = TreeSitterBackend()
 
 
 def parse_billboard(billboard_string: str) -> Billboard:
-    lines = classify_lines(billboard_string)
+    lines = _backend.classify(billboard_string)
     filters = extract_group_filters(lines)
     billboard_default_args = extract_default_args(lines)
     command_lines = extract_commands(lines)
@@ -121,7 +122,7 @@ def parse_billboard(billboard_string: str) -> Billboard:
 
     synth_chunks = extract_synth_chunks(lines)
 
-    synth_sections = [parse_synth_chunk(chunk) for chunk in synth_chunks]
+    synth_sections = [_backend.parse_synth_chunk(chunk) for chunk in synth_chunks]
 
     # Sane default
     scale_data = ScaleData("c", "maj", 4)
