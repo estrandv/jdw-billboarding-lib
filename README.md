@@ -18,7 +18,7 @@ Billboard Notation is a domain-specific language for multi-track musical composi
 
 ## Documentation
 
-- **[Billboard Specification](https://github.com/estrandv/tree-sitter-jdw-billboarding/blob/main/BILLBOARD_SPEC.md)**: Complete language specification
+- **[Billboard Specification](https://github.com/estrandv/tree-sitter-jdw-billboarding/blob/main/README.md)**: Complete language specification
 - **[Shuttle Notation Spec](https://github.com/estrandv/shuttle-notation-python)**: Base notation system
 
 ## Dependencies
