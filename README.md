@@ -26,6 +26,17 @@ Billboard Notation is a domain-specific language for multi-track musical composi
 - [shuttle-notation-python](https://github.com/estrandv/shuttle-notation-python)
 - pythonosc
 
+## Grammar / Parser
+
+Parsing uses [tree-sitter](https://tree-sitter.github.io/). The grammar lives in the
+separate [tree-sitter-jdw-billboarding](https://github.com/estrandv/tree-sitter-jdw-billboarding) repo.
+The backend finds `parser.c` via a sibling directory lookup (`../tree-sitter-jdw-billboarding/src/parser.c`)
+and compiles it into a cached `.so` on first run.
+
+**This is temporary.** The grammar should eventually be vendored or published as a pip package
+(`tree-sitter-jdw-billboarding`) so it can be listed as a regular dependency. See
+[tree_sitter_backend.py](jdw_billboarding/lib/tree_sitter_backend.py) for the source resolution logic.
+
 ## Syntax Highlighting
 
 - [VSCode Extension](https://github.com/estrandv/jdw-billboarding-vscode)
