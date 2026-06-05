@@ -124,9 +124,12 @@ class ElementConverter:
 
     def resolve_external_id(self, element: ResolvedElement) -> str:
         resolved = element.suffix
-        return resolved if resolved != "" else \
-            self.common_identifier + "_" + self.instrument_name + "_" + str(self.id_counter) + str(element.index) + "_{nodeId}"
+        if resolved != "":
+            return resolved
+        node_id = self.id_counter
         self.id_counter += 1
+        return (self.common_identifier + "_" + self.instrument_name + "_"
+                + str(node_id) + str(element.index) + "_" + str(node_id))
 
     # TODO TRANSPOSE: Effectively where freq is determined from note number
     # Issue is that this gets called in a nested fashion, causing vagrant args if we fix-as-is

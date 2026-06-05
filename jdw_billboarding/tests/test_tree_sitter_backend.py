@@ -245,3 +245,16 @@ def test_classify_malformed_raises():
     b = TreeSitterBackend()
     with pytest.raises(Exception, match="Malformed input"):
         b.classify("@@@\n")
+
+
+def test_parse_synth_chunk_empty_raises():
+    b = TreeSitterBackend()
+    with pytest.raises(ValueError, match="no content"):
+        b.parse_synth_chunk([])
+
+
+def test_parse_synth_chunk_no_header_raises():
+    b = TreeSitterBackend()
+    lines = b.classify("c4 e4 g4\n")
+    with pytest.raises(ValueError, match="does not start with synth header"):
+        b.parse_synth_chunk(lines)

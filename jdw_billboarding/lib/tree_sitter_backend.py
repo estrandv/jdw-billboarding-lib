@@ -4,7 +4,7 @@ from pathlib import Path
 
 from tree_sitter import Language, Parser, Node
 
-from jdw_billboarding.lib.line_classify import BillboardLine, BillboardLineType
+from jdw_billboarding.lib.line_classify import BillboardLine, BillboardLineType, is_commented
 from jdw_billboarding.lib.parse_classes import (
     EffectDefinition, TrackDefinition, SynthHeader, SynthSection,
 )
@@ -155,17 +155,16 @@ class TreeSitterBackend:
         return EffectDefinition(instrument_name, unique_suffix, args_string)
 
     def parse_synth_chunk(self, chunk: list[BillboardLine]) -> SynthSection:
-        assert len(chunk) > 0, "Malformed synth chunk: no content"
-        assert chunk[0].type == BillboardLineType.SYNTH_HEADER, \
-            "Malformed synth chunk; does not start with synth header"
+        if len(chunk) == 0:
+            raise ValueError("Malformed synth chunk: no content")
+        if chunk[0].type != BillboardLineType.SYNTH_HEADER:
+            raise ValueError("Malformed synth chunk; does not start with synth header")
 
         header = self.parse_synth_header(chunk[0].content)
 
         tracks: list[TrackDefinition] = []
         effects: list[EffectDefinition] = []
         track_counter = 0
-
-        from jdw_billboarding.lib.line_classify import is_commented
 
         for line in chunk[1:]:
             if line.type == BillboardLineType.TRACK_DEFINITION:

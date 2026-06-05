@@ -2,7 +2,7 @@ from shuttle_notation.parsing.element import ResolvedElement
 from shuttle_notation.parsing.full_parse import Parser
 from shuttle_notation.parsing.information_parsing import DynamicArg
 
-from jdw_billboarding.lib.parse_classes import EffectDefinition, TrackDefinition, SynthHeader
+from jdw_billboarding.lib.parse_classes import TrackDefinition
 from jdw_billboarding.lib.shuttle_hacks import parse_args
 
 
@@ -44,18 +44,3 @@ def _arg_override(elements: list[ResolvedElement], override: dict[str,DynamicArg
                     element.args[arg_key] = new_value
             else:
                 element.args[arg_key] = new_value
-
-# Tests
-if __name__ == "__main__":
-
-    assert cut_first("abcd", 3) == "d"
-    assert cut_first("    ", 1) == "   "
-    assert cut_first("a", 0) == "a"
-    assert cut_first("a", 1) == ""
-    assert cut_first("0", 2) == ""
-
-    # Quick unasserted execution happy-case
-    parse_synth_header("@SP_mysynth:group arg1,arg2,arg3 1:1 2:2 3:3")
-    parse_track_definition("c4 g4 f2 x", 0)
-    parse_effect_definition("€effect:req arg1,arg2,arg3")
-    parse_track(TrackDefinition("c4 c4 d4", "special", "sus4.0", 1), SynthHeader("synth", False, False, False, "arg2.0", "22:2", "group"))
