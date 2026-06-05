@@ -1,49 +1,13 @@
-import ctypes
-import subprocess
-from pathlib import Path
-
 from tree_sitter import Language, Parser, Node
 
 from jdw_billboarding.lib.line_classify import BillboardLine, BillboardLineType, is_commented
 from jdw_billboarding.lib.parse_classes import (
     EffectDefinition, TrackDefinition, SynthHeader, SynthSection,
 )
-
-_PACKAGE_DIR = Path(__file__).resolve().parent
-_SIBLING_DIR = _PACKAGE_DIR.parent.parent.parent / "tree-sitter-jdw-billboarding" / "src"
-_SO_PATH = _PACKAGE_DIR / "jdw_billboarding.so"
+from tree_sitter_jdw_billboarding import language as _jdw_language
 
 
-def _find_parser_source():
-    sibling = _SIBLING_DIR / "parser.c"
-    if sibling.exists():
-        return sibling, str(_SIBLING_DIR)
-    raise RuntimeError(
-        "Could not find tree-sitter-jdw-billboarding parser source. "
-        "Expected sibling at tree-sitter-jdw-billboarding/src/parser.c"
-    )
-
-
-def _build_shared_lib():
-    if _SO_PATH.exists():
-        return str(_SO_PATH)
-    parser_c, include_dir = _find_parser_source()
-    result = subprocess.run(
-        ["cc", "-shared", "-fPIC", "-o", str(_SO_PATH),
-         str(parser_c), f"-I{include_dir}"],
-        capture_output=True, text=True,
-    )
-    if result.returncode != 0:
-        raise RuntimeError(f"Failed to build billboarding parser: {result.stderr}")
-    return str(_SO_PATH)
-
-
-def _load_language():
-    lib_path = _build_shared_lib()
-    lib = ctypes.CDLL(lib_path)
-    func = lib.tree_sitter_jdw_billboarding
-    func.restype = ctypes.c_void_p
-    return Language(func())
+_JDW_LANG = Language(_jdw_language())
 
 
 _NODE_TYPE_TO_LINE_TYPE = {
@@ -59,9 +23,8 @@ _NODE_TYPE_TO_LINE_TYPE = {
 
 class TreeSitterBackend:
     def __init__(self):
-        self._lang = _load_language()
         self._parser = Parser()
-        self._parser.language = self._lang
+        self._parser.language = _JDW_LANG
 
     def parse(self, source_string: str):
         tree = self._parser.parse(source_string.encode("utf-8"))
