@@ -1,6 +1,6 @@
 [project]
 name = "jdw_billboarding"
-version = "0.1"
+version = "0.2.1"
 description = "Library for parsing 'billboard'-format song definitions into Jackdaw commands."
 readme = "README.md"
 authors = [{ name = "Emil Strandvik" }]
