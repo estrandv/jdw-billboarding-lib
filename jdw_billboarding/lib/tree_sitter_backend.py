@@ -85,7 +85,7 @@ class TreeSitterBackend:
 
     def parse_track_definition(self, source_or_node, index: int) -> TrackDefinition:
         node = self._resolve_node(source_or_node, "track")
-        content = node.text.decode()
+        content = self._shuttle_content(node)
 
         group_override = ""
         arg_override = ""
@@ -99,6 +99,13 @@ class TreeSitterBackend:
                         arg_override = self._arg_list_to_string(cc)
 
         return TrackDefinition(content, group_override, arg_override, index)
+
+    @staticmethod
+    def _shuttle_content(node) -> str:
+        for c in node.children:
+            if c.type == "shuttle_content":
+                return c.text.decode()
+        return node.text.decode()
 
     def parse_effect_definition(self, source_or_node) -> EffectDefinition:
         node = self._resolve_node(source_or_node, "effect_definition")

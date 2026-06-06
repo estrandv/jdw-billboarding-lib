@@ -1,3 +1,5 @@
+import re
+
 from shuttle_notation.parsing.element import ResolvedElement
 from shuttle_notation.parsing.full_parse import Parser
 from shuttle_notation.parsing.information_parsing import DynamicArg
@@ -6,17 +8,24 @@ from jdw_billboarding.lib.parse_classes import TrackDefinition
 from jdw_billboarding.lib.shuttle_hacks import parse_args
 
 
+# Billboard line continuations (`\` + newline) are captured inside the
+# `shuttle_content` token by the billboard grammar. Strip them before handing
+# the content to the shuttle parser, which doesn't know about this syntax.
+_LINE_CONT_RE = re.compile(r"\\\r?\n\s*")
+
+
 def cut_first(source: str, amount: int) -> str:
     possible = len(source) >= amount
     return "".join(source[amount:]) if possible else ""
 
 
-
-
 # Parse the shuttle string of the track, resolving any arg inheritance, returning the list of its elements
 def parse_track(track: TrackDefinition, default_arg_string: str) -> list[ResolvedElement]:
-    # Easiest way to apply default args
-    full_source = "(" + track.content + "):" + default_arg_string if default_arg_string != "" else track.content
+    content = _LINE_CONT_RE.sub(" ", track.content)
+    if default_arg_string:
+        full_source = f"({content}):{default_arg_string}"
+    else:
+        full_source = content
     override_args = parse_args(track.arg_override, {})
     elements = Parser().parse(full_source)
 
