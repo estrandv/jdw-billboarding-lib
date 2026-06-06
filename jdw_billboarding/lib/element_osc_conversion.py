@@ -61,8 +61,7 @@ class ElementConverter:
     # TODO: Not sure if transpose steps is relevant here, should it be class level?
     def resolve_message(self, element: ResolvedElement, transpose_steps: int = 0) -> ElementMessage | None:
         if begins_with(element.suffix, "@"):
-            # Remove symbol from suffix to create note mod external id
-            return ElementMessage(element, self.to_note_mod(element, cut_first(element.suffix, 1), transpose_steps))
+            return ElementMessage(element, self.to_note_mod(element, transpose_steps=transpose_steps, external_id_override=cut_first(element.suffix, 1)))
         elif is_symbol(element, "x"):
             # Silence
             return ElementMessage(element, create_msg("/empty_msg", []))
@@ -82,8 +81,9 @@ class ElementConverter:
         else:
             return ElementMessage(element, self.to_note_on_timed(element, transpose_steps))
 
-    def to_note_mod(self, element: ResolvedElement, transpose_steps: int = 0) -> OscMessage:
-        external_id = self.resolve_external_id(element) if self.external_id_override == "" else self.external_id_override
+    def to_note_mod(self, element: ResolvedElement, transpose_steps: int = 0, external_id_override: str = "") -> OscMessage:
+        effective_override = external_id_override if external_id_override else self.external_id_override
+        external_id = self.resolve_external_id(element) if effective_override == "" else effective_override
         osc_args = args_as_osc(element.args, ["freq", self.resolve_freq(element, transpose_steps)])
         return create_msg("/note_modify", [external_id, SC_DELAY_MS] + osc_args)
 
