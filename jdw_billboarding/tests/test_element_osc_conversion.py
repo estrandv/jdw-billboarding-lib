@@ -19,10 +19,12 @@ def test_external_id_counter_increments():
     id2 = converter.resolve_external_id(e2)
 
     assert id1 != id2, "Two calls should produce different IDs"
-    assert "{nodeId}" not in id1, "Placeholder {nodeId} should be resolved"
-    assert "{nodeId}" not in id2, "Placeholder {nodeId} should be resolved"
-    assert "0_4_0" in id1 or id1.endswith("_0"), f"First ID should contain counter 0: {id1}"
-    assert "1_5_1" in id2 or id2.endswith("_1"), f"Second ID should contain counter 1: {id2}"
+    assert "{nodeId}" in id1, "Placeholder {nodeId} should be present (filled by jdw-sc)"
+    assert "{nodeId}" in id2, "Placeholder {nodeId} should be present (filled by jdw-sc)"
+    assert id1.startswith("0_test_synth_0"), f"First ID should start with counter 0: {id1}"
+    assert id2.startswith("0_test_synth_1"), f"Second ID should start with counter 1: {id2}"
+    assert id1.endswith("_{nodeId}"), f"First ID should end with {{nodeId}}: {id1}"
+    assert id2.endswith("_{nodeId}"), f"Second ID should end with {{nodeId}}: {id2}"
 
 
 def test_external_id_uses_suffix_when_present():

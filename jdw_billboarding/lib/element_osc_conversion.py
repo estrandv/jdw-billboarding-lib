@@ -1,32 +1,22 @@
 """
 
-TODO: replaces a lot of element conversion logic in jdw_osc_utils
-- Probably best as a "service" rather than a wrapper around element
-- So you frontload it with all the extra data and then pass elements in
+External ID uniqueness strategy:
+
+    Every external_id ends with "_{nodeId}", a template that jdw-sc replaces with
+    the actual scsynth node ID. Since scsynth node IDs are globally unique and
+    monotonically incrementing, every substitution is unique — even across loops.
+
+    This means:
+    - No registry cleanup is needed (jdw-sc has no /n_end handler)
+    - A new ElementConverter per loop is fine (id_counter resets to 0)
+    - Drones use external_id_override (hdrone_id) so they don't recreate on every loop
+    - The {nodeId} part also lets /note_modify use simple regex patterns to target notes
+
+    See AGENTS.md for full architecture docs.
 
 TODO:
-    - IMplement index-notes support by providing a scale
+    - Implement index-notes support by providing a scale
     - Remove the code in jdw_osc_utils that this replaces
-    - Think about id clearing
-        - As I see it, an id is permanent once locked in
-        - So after just one loop, notes will become quiet
-        - Since notes die off naturally when gate is turned off, you can't really clear them in the registry automatically
-        - As such it might not be a good idea after all to ignore new notes with existing ids
-
-        => Instead, we should re-solve the original issue
-            - Drones should not recreate every single time you hit ctrl+j
-            - ... but pycompose can't know what it has previously sent
-            - ... so the best way to do things would be to pass a flag, maybe
-                - With each note message that has an external id: allow override
-                - Other options:
-                    - No external id for non-drone note-ons (but this means you can't so note mods in regular tracks)
-                        - Might not be so bad, since drone replaces a lot of it
-                        - The idea of modifying notes of any type has been kinda replaced with kr-tracks
-                        - ... but I still like the idea of all notes having something in commmon by-type
-                    - Wildcard external ids
-                        - Basically: my_id_[node_id] would tell jdw-sc to insert the current node_id
-                        - This would preserve external id structure
-
 """
 # TODO: Pass in, somehow...
 SC_DELAY_MS = 70
@@ -129,7 +119,7 @@ class ElementConverter:
         node_id = self.id_counter
         self.id_counter += 1
         return (self.common_identifier + "_" + self.instrument_name + "_"
-                + str(node_id) + str(element.index) + "_" + str(node_id))
+                + str(node_id) + str(element.index) + "_" + str(node_id) + "_{nodeId}")
 
     # TODO TRANSPOSE: Effectively where freq is determined from note number
     # Issue is that this gets called in a nested fashion, causing vagrant args if we fix-as-is
